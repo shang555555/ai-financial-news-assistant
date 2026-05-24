@@ -13,9 +13,14 @@ logger = logging.getLogger(__name__)
 
 class NewsAnalysisService:
     def __init__(self, settings: Settings, deepseek_api_key: str | None = None) -> None:
+        self.deepseek_api_key = (
+            deepseek_api_key
+            or getattr(settings, "DEEPSEEK_API_KEY", "")
+            or getattr(settings, "deepseek_api_key", "")
+        )
         self.settings = replace(
             settings,
-            deepseek_api_key=deepseek_api_key or settings.deepseek_api_key,
+            deepseek_api_key=self.deepseek_api_key,
         )
         self.cache = NewsAnalysisCache(settings.cache_file_path)
         self.summarizer = OpenAISummarizer(self.settings)

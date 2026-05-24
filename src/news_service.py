@@ -16,7 +16,12 @@ class NewsService:
 
     def __init__(self, settings: Settings, news_api_key: str | None = None) -> None:
         self.settings = settings
-        self.news_api_key = news_api_key or settings.news_api_key
+        self.api_key = (
+            news_api_key
+            or getattr(settings, "NEWS_API_KEY", "")
+            or getattr(settings, "news_api_key", "")
+        )
+        self.news_api_key = self.api_key
 
     def fetch_news(
         self,
@@ -36,7 +41,7 @@ class NewsService:
             "pageSize": min(limit, self.settings.news_page_size),
             "from": from_date,
         }
-        headers = {"X-Api-Key": self.news_api_key}
+        headers = {"X-Api-Key": self.api_key}
 
         logger.info(
             "Fetching news | stock=%s company=%s limit=%s",
