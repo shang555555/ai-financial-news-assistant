@@ -36,11 +36,11 @@ class Settings:
         return cls(
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
-            deepseek_api_key=os.getenv("DEEPSEEK_API_KEY", ""),
+            deepseek_api_key="",
             deepseek_flash_model=os.getenv("DEEPSEEK_FLASH_MODEL", "deepseek-v4-flash"),
             deepseek_pro_model=os.getenv("DEEPSEEK_PRO_MODEL", "deepseek-v4-pro"),
             deepseek_advanced_mode=_to_bool(os.getenv("DEEPSEEK_ADVANCED_MODE", "false")),
-            news_api_key=os.getenv("NEWS_API_KEY", ""),
+            news_api_key="",
             news_language=os.getenv("NEWS_LANGUAGE", "en"),
             news_page_size=int(os.getenv("NEWS_PAGE_SIZE", "10")),
             max_tokens=int(os.getenv("SUMMARY_MAX_TOKENS", "120")),

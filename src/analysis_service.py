@@ -1,5 +1,6 @@
 import logging
 import time
+from dataclasses import replace
 
 from src.cache_service import NewsAnalysisCache
 from src.config import Settings
@@ -11,10 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class NewsAnalysisService:
-    def __init__(self, settings: Settings) -> None:
-        self.settings = settings
+    def __init__(self, settings: Settings, deepseek_api_key: str | None = None) -> None:
+        self.settings = replace(
+            settings,
+            deepseek_api_key=deepseek_api_key or settings.deepseek_api_key,
+        )
         self.cache = NewsAnalysisCache(settings.cache_file_path)
-        self.summarizer = OpenAISummarizer(settings)
+        self.summarizer = OpenAISummarizer(self.settings)
         self.sentiment_analyzer = SentimentAnalyzer()
 
     def analyze_articles(self, stock_symbol: str, articles: list[dict]) -> tuple[list[dict], dict]:
