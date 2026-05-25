@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 class NewsService:
     base_url = "https://newsapi.org/v2/everything"
 
-    def __init__(self, settings: Settings, news_api_key: str | None = None) -> None:
+    def __init__(self, 
+                 settings, 
+                 news_api_key= None
+    ):
         self.settings = settings
         self.api_key = (
             news_api_key
