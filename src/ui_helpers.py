@@ -54,9 +54,16 @@ def get_stock_info(ticker: str) -> dict:
             info = stock.info or {}
         except Exception:
             logger.exception("Failed to fetch info | ticker=%s", symbol)
+        print("Raw yfinance info:", info)
 
         company_info["name"] = info.get("shortName") or symbol
-        company_info["industry"] = info.get("industry") or "Unknown"
+        raw_industry = (
+            info.get("industry")
+            or info.get("sector")
+            or info.get("quoteType")
+            or "Unknown"
+        )
+        company_info["industry"] = _normalize_industry(raw_industry)
 
         if company_info["price"] is None:
             company_info["price"] = _latest_close_price(stock, symbol)
@@ -104,6 +111,32 @@ def _latest_close_price(stock: yf.Ticker, symbol: str) -> float | None:
     if close_price.empty:
         return None
     return float(close_price.iloc[-1])
+
+
+def _normalize_industry(industry: Any) -> str:
+    if not industry:
+        return "Unknown"
+
+    value = str(industry).strip()
+    if not value:
+        return "Unknown"
+
+    normalized_checks = [
+        ("Semiconductor", "Semiconductor"),
+        ("Technology", "Technology"),
+        ("Consumer Cyclical", "Consumer"),
+        ("Financial", "Finance"),
+        ("Healthcare", "Healthcare"),
+        ("Energy", "Energy"),
+        ("Communication", "Communication"),
+        ("Industrials", "Industrial"),
+    ]
+    value_lower = value.lower()
+    for keyword, normalized in normalized_checks:
+        if keyword.lower() in value_lower:
+            return normalized
+
+    return value or "Unknown"
 
 
 def get_secret(name: str, default: str = "") -> str:
