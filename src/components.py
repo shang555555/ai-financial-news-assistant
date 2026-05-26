@@ -67,14 +67,11 @@ def render_section(title: str, subtitle: str | None = None) -> None:
 
 
 def render_company_card(stock_symbol: str, company_name: str, stock_info: dict) -> None:
-    price = (
-        stock_info.get("currentPrice")
-        or stock_info.get("regularMarketPrice")
-        or stock_info.get("previousClose")
-    )
+    price = stock_info.get("price")
     logo = escape((company_name or stock_symbol or "?")[:1].upper())
-    sector = stock_info.get("sector") or "N/A"
-    market_cap = format_market_cap(stock_info.get("marketCap"))
+    industry = stock_info.get("industry") or "N/A"
+    market_cap = format_market_cap(stock_info.get("market_cap"))
+    currency = stock_info.get("currency") or "N/A"
     st.markdown(
         f"""
         <div class="wallet-card">
@@ -93,7 +90,7 @@ def render_company_card(stock_symbol: str, company_name: str, stock_info: dict) 
           </div>
           <div class="mini-grid">
             <div class="metric-card">
-              <div class="metric-value" style="font-size:24px;">{escape(sector)}</div>
+              <div class="metric-value" style="font-size:24px;">{escape(industry)}</div>
               <div class="metric-label">行业</div>
             </div>
             <div class="metric-card">
@@ -101,7 +98,7 @@ def render_company_card(stock_symbol: str, company_name: str, stock_info: dict) 
               <div class="metric-label">市值</div>
             </div>
             <div class="metric-card">
-              <div class="metric-value" style="font-size:28px;">{escape(stock_info.get("currency") or "USD")}</div>
+              <div class="metric-value" style="font-size:28px;">{escape(currency)}</div>
               <div class="metric-label">报价货币</div>
             </div>
             <div class="metric-card">

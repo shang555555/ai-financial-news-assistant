@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import logging
+from numbers import Real
 from pathlib import Path
 from typing import Any
 
@@ -22,19 +23,87 @@ def load_css(path: str = "styles.css") -> None:
 
 @st.cache_data(ttl=3600)
 def get_stock_info(ticker: str) -> dict:
-    ticker = ticker.strip().upper()
-    if not ticker:
-        return {}
+    symbol = ticker.strip().upper()
+    company_info = {
+        "name": symbol,
+        "symbol": symbol,
+        "price": None,
+        "industry": "Unknown",
+        "market_cap": None,
+        "currency": None,
+    }
+    if not symbol:
+        print("Company info:", company_info)
+        return company_info
 
     try:
-        return yf.Ticker(ticker).info or {}
+        stock = yf.Ticker(symbol)
+
+        fast_info = {}
+        try:
+            fast_info = stock.fast_info or {}
+        except Exception:
+            logger.exception("Failed to fetch fast_info | ticker=%s", symbol)
+
+        company_info["price"] = _fast_info_value(fast_info, "lastPrice")
+        company_info["market_cap"] = _fast_info_value(fast_info, "marketCap")
+        company_info["currency"] = _fast_info_value(fast_info, "currency")
+
+        info = {}
+        try:
+            info = stock.info or {}
+        except Exception:
+            logger.exception("Failed to fetch info | ticker=%s", symbol)
+
+        company_info["name"] = info.get("shortName") or symbol
+        company_info["industry"] = info.get("industry") or "Unknown"
+
+        if company_info["price"] is None:
+            company_info["price"] = _latest_close_price(stock, symbol)
     except Exception:
-        logger.exception("Failed to fetch stock info | ticker=%s", ticker)
-        return {}
+        logger.exception("Failed to fetch company info | ticker=%s", symbol)
+
+    print("Company info:", company_info)
+    return company_info
 
 
 def get_company_name(ticker: str, stock_info: dict) -> str:
-    return stock_info.get("shortName") or stock_info.get("longName") or ticker
+    return stock_info.get("name") or ticker
+
+
+def _fast_info_value(fast_info: Any, key: str) -> Any:
+    try:
+        value = fast_info[key]
+    except Exception:
+        try:
+            value = getattr(fast_info, key)
+        except Exception:
+            return None
+
+    if value is None:
+        return None
+    try:
+        if bool(pd.isna(value)):
+            return None
+    except Exception:
+        pass
+    return value
+
+
+def _latest_close_price(stock: yf.Ticker, symbol: str) -> float | None:
+    try:
+        history = stock.history(period="1d")
+    except Exception:
+        logger.exception("Failed to fetch price history | ticker=%s", symbol)
+        return None
+
+    if history.empty or "Close" not in history.columns:
+        return None
+
+    close_price = history["Close"].dropna()
+    if close_price.empty:
+        return None
+    return float(close_price.iloc[-1])
 
 
 def get_secret(name: str, default: str = "") -> str:
@@ -45,13 +114,13 @@ def get_secret(name: str, default: str = "") -> str:
 
 
 def format_price(price: Any) -> str:
-    if isinstance(price, (int, float)):
+    if isinstance(price, Real) and not isinstance(price, bool):
         return f"${price:,.2f}"
     return "N/A"
 
 
 def format_market_cap(market_cap: Any) -> str:
-    if not isinstance(market_cap, (int, float)):
+    if not isinstance(market_cap, Real) or isinstance(market_cap, bool):
         return "N/A"
 
     if market_cap >= 1_000_000_000_000:

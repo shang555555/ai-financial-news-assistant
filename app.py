@@ -159,7 +159,7 @@ def main() -> None:
     ) = render_input_panel(settings)
 
     if stock_symbol:
-        if not stock_info or company_name == stock_symbol:
+        if stock_info.get("price") is None and stock_info.get("market_cap") is None:
             st.warning("无法获取公司信息，已使用 ticker 作为搜索关键词。")
         render_company_card(stock_symbol, company_name, stock_info)
 
